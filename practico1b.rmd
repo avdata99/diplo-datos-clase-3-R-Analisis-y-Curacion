@@ -1,0 +1,31 @@
+---
+title: "Análisis y Curacion de datos"
+output: html_notebook
+---
+
+# Practico 1
+## Entregar un Rmd donde se encuentren todos los vuelos que:
+ - Que arribaron con un retraso de mas de dos horas.
+ - Volaron hacia Houston (IAH o HOU)
+ - Fueron operados por United, American o Delta.
+ - Salieron en Verano (Julio, Agosto y Septiembre)
+ - Arrivaron mas de dos horas tarde, pero salieron bien.
+ - Salieron entre medianoche y las 6 am.
+
+
+```{r}
+# install.packages("nycflights13")
+library(nycflights13)
+fligths<-nycflights13::flights
+fligths
+```
+
+```{r}
+str(fligths)
+```
+
+## Que arribaron con un retraso de mas de dos horas.
+```{r}
+
+```
+
