@@ -11,8 +11,8 @@ output: html_notebook
  - Salieron en Verano (Julio, Agosto y Septiembre)
  - Arrivaron mas de dos horas tarde, pero salieron bien.
  - Salieron entre medianoche y las 6 am.
-
-
+ 
+Especificaciones del dataset [acá](https://cran.r-project.org/web/packages/nycflights13/nycflights13.pdf).
 ```{r}
 # install.packages("nycflights13")
 library(nycflights13)
@@ -25,6 +25,35 @@ str(fligths)
 ```
 
 ## Que arribaron con un retraso de mas de dos horas.
+```{r}
+retraso_dos_horas <- subset(flights, flights["arr_time"] - flights["sched_arr_time"] > 200)
+retraso_dos_horas
+```
+
+## Volaron hacia Houston (IAH o HOU)
+
+```{r}
+# hacia_houston = subset(flights, flights["DEST"] in ("IAH", "HOU"))
+```
+
+## Fueron operados por United, American o Delta.
+
+```{r}
+
+```
+
+## Salieron en Verano (Julio, Agosto y Septiembre)
+
+```{r}
+
+```
+
+## Arrivaron mas de dos horas tarde, pero salieron bien.
+```{r}
+
+```
+
+## Salieron entre medianoche y las 6 am.
 ```{r}
 
 ```
