@@ -1,0 +1,16 @@
+---
+title: "Práctico 3. Clase 4 de Análisis y Curación"
+output: html_notebook
+---
+
+# Practico 3.
+
+ - Elija un dataset clasificado de su preferencia y area (domain expertise), aplique un metodo de clustering y/o mixtura de Gaussianas en el mismo.
+ -  Investigue los resultados en el meta parametro K numero de cumulos e investigue posibles procesos de seleccion del mismo.
+ - Elabore un resumen, y selecione un mejor valor segun el/los criterios aplicados, discuta el significado de los cumulos encontrados.
+ - Comente la influencia de la normalizacion de los datos en los resultados del clustering.
+
+```{r}
+print("No hecho")
+```
+

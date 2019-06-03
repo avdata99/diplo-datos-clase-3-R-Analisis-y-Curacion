@@ -3,7 +3,7 @@ title: "Análisis y Curacion de datos"
 output: html_notebook
 ---
 
-# Practico 1
+# Practico 1.
 ## Entregar un Rmd donde se encuentren todos los vuelos que:
  - Que arribaron con un retraso de mas de dos horas.
  - Volaron hacia Houston (IAH o HOU)
@@ -13,6 +13,7 @@ output: html_notebook
  - Salieron entre medianoche y las 6 am.
  
 Especificaciones del dataset [acá](https://cran.r-project.org/web/packages/nycflights13/nycflights13.pdf).
+
 ```{r}
 # install.packages("nycflights13")
 library(nycflights13)
@@ -25,36 +26,60 @@ str(fligths)
 ```
 
 ## Que arribaron con un retraso de mas de dos horas.
+
+Cálculo:
+
 ```{r}
-retraso_dos_horas <- subset(flights, flights["arr_time"] - flights["sched_arr_time"] > 200)
-retraso_dos_horas
+retraso_dos_horas <- subset(flights, flights["arr_delay"] > 200)
+print(retraso_dos_horas)
 ```
 
 ## Volaron hacia Houston (IAH o HOU)
 
 ```{r}
-# hacia_houston = subset(flights, flights["DEST"] in ("IAH", "HOU"))
+df_flights = data.frame(flights)
+buscados <- c("IAH", "HOU")
+hacia_houston <- df_flights[df_flights$dest %in% buscados, ]
+print(hacia_houston)
 ```
 
 ## Fueron operados por United, American o Delta.
 
+Ver las abreviaturas de las aerolíneas
+
 ```{r}
+airlines<-nycflights13::airlines
+airlines
+```
+
+
+```{r}
+buscados <- c("AA", "UA", "DL")
+operators <- df_flights[df_flights$carrier %in% buscados, ]
+print(operators)
 
 ```
 
 ## Salieron en Verano (Julio, Agosto y Septiembre)
 
 ```{r}
-
+buscados = c(7, 8, 9)
+verano <- df_flights[df_flights$mont %in% buscados, ]
+print(verano)
 ```
 
 ## Arrivaron mas de dos horas tarde, pero salieron bien.
 ```{r}
-
+retraso_dos_horas_que_salieron_bien = subset(retraso_dos_horas, retraso_dos_horas["dep_delay"] < 60)
+retraso_dos_horas_que_salieron_bien
 ```
+
+No hay vuelos que hayan llegado dos horas tarde y hayan salido a tiempo
 
 ## Salieron entre medianoche y las 6 am.
 ```{r}
-
+buscados = c(7, 8, 9)
+de_0_a_6_am <- df_flights[df_flights$dep_time < 700, ]
+print(de_0_a_6_am)
 ```
 
