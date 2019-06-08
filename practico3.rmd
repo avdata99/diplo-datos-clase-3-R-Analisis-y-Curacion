@@ -1,6 +1,8 @@
 ---
 title: "Práctico 3. Clase 4 de Análisis y Curación"
 output: html_notebook
+editor_options: 
+  chunk_output_type: inline
 ---
 
 # Practico 3.
@@ -11,6 +13,111 @@ output: html_notebook
  - Comente la influencia de la normalizacion de los datos en los resultados del clustering.
 
 ```{r}
-print("No hecho")
+#load("base.RData")
+# En base se tiene la información de 46 variables
+#save(base, file="datosbarrios.RData")
+#dim(base)
+load("datosbarrios.RData")
+
 ```
 
+```{r}
+attach(base)
+educ=base[,1:11]
+leer=base[,12:13]
+salud=base[,14:15]
+empleo=base[,16:18]
+nbi=base[,20:24]
+privacion=base[,25:28]
+vivienda=base[,29:33]
+habitantes=base[,34:41]
+std=base[,42:46]
+
+#Para que tenga sentido el análisis se toman algunos ratios por cuestiones conceptuales,
+# por ejemplo la cantidad de personas empleadas en un barrio esta influenciada por las personas en 
+# condición de trabajar (14 años o mas)
+educstd=educ/jefes
+leerstd=leer/pob3omas
+saludstd=salud/poblacion
+empleostd=empleo/pob14omas
+nbistd=nbi/poblacion
+privacionstd=privacion/poblacion
+viviendastd=vivienda/hogares
+habitantesstd=habitantes/hogares
+
+basestd=cbind(educstd,leerstd,saludstd,empleostd,nbistd,privacionstd,viviendastd,habitantesstd)
+sub=subset(cbind(basestd,poblacion),poblacion>=2000)
+semibase=sub[,-ncol(sub)]
+ 
+# se saca del listado sacar del listado: inicial, sabeleer, cobertura, ocupados, inactivos, sinprivacion, casa, uno, o sea se dejan esaca categorías como referencia
+datos=semibase[,-c(1,12,14,16,18,24,28,33)]
+dat=datos
+```
+
+```{r}
+
+#Se calculan las sumas de cuadrados dentro, para distintos valores de k (desde 2 hasta 20) y se grafica
+n.lev=20
+wss <- rnorm(10)
+while (prod(wss==sort(wss,decreasing=T))==0) {
+  wss <- (nrow(dat)-1)*sum(apply(scale(dat),2,var))
+  for (i in 2:n.lev) wss[i] <- sum(kmeans(scale(dat), centers=i)$withinss)}
+wss
+plot(1:20, wss)
+
+```
+
+```{r}
+#cluster jerárquico
+hc = hclust(dist(cbind(x1,x2)), method = 'ward')
+par(mar=c(0,5,0,0), cex=0.08)
+y=cutree(hc, 7)
+library(sparcl)
+ColorDendrogram(hc, y = y, labels = names(y), branchlength = 80)#plot52
+par(opar)
+```
+```{r}
+# En muchos casos se recomienda armar loa grupos en base a los componentes principales mas importantes
+##componentes principales
+library(FactoMineR)
+par(cex=0.05)
+result <- PCA(dat) # graphs generated automatically
+summary(result)
+plot(result) # gráficos varios entre ellos el biplot
+res=result$ind$coord[]
+x1 = res[,1]
+x2 = res[,2]
+x3 = res[,3] 
+```
+
+```{r}
+fit1=kmeansruns(cbind(x1,x2),krange=1:10,criterion="ch", scaledata=TRUE)
+fit2=kmeansruns(cbind(x1,x2),krange=1:10,criterion="ch")
+```
+
+es interesante notar que sin estandarizar los compoenntes principales 1 y 2, se obtienen 9 grupos, en cambio estandarizando se obtienen 1 solo cluster.
+
+```{r}
+#otra biblioteca, en la cual se puede graficar
+library(cluster)
+fit1 <- kmeans(cbind(x1,x2), 2, nstart=100)
+par(mar=c(5,5,1,1), cex=0.4)
+clusplot(cbind(x1,x2), fit1$cluster, color=TRUE, shade=TRUE, 
+         labels=2, lines=0, cex=0.8)
+par(opar)
+table(fit1$cluster)
+
+```
+
+
+
+Para analizar seleccionar clusters se puede usar la función kmeansruns, estandarizando y no estandarizando
+
+```{r}
+
+library(fpc)
+fit=kmeansruns(c(x1,x2),krange=1:10,criterion="ch", scaledata=FALSE)
+fit_scale=kmeansruns(c(x1,x2),krange=1:10,criterion="ch", scaledata=TRUE)
+```
+
+Es extraño notar que tanco con estandarización como sin ella, ene ste caso se elige 1 cluster
