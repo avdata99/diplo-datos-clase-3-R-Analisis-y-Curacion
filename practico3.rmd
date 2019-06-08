@@ -1,16 +1,22 @@
 ---
 title: "Práctico 3. Clase 4 de Análisis y Curación"
-output: html_notebook
-editor_options: 
+author:
+- name: Andrés Vázquez
+- name: Sergio Buzzi
+output:
+  html_document:
+    df_print: paged
+editor_options:
   chunk_output_type: inline
 ---
 
-# Practico 3.
 
+# Inciso 1
  - Elija un dataset clasificado de su preferencia y area (domain expertise), aplique un metodo de clustering y/o mixtura de Gaussianas en el mismo.
- -  Investigue los resultados en el meta parametro K numero de cumulos e investigue posibles procesos de seleccion del mismo.
- - Elabore un resumen, y selecione un mejor valor segun el/los criterios aplicados, discuta el significado de los cumulos encontrados.
- - Comente la influencia de la normalizacion de los datos en los resultados del clustering.
+ 
+## Datos
+
+Se tiene información sobre 46 variables, para los 479 barrios de la Ciudad de Córdoba, originaria de la Encuesta Provincial de hogares de la Provincia de Córdoba 2008.
 
 ```{r}
 #load("base.RData")
@@ -54,70 +60,84 @@ datos=semibase[,-c(1,12,14,16,18,24,28,33)]
 dat=datos
 ```
 
-```{r}
+## Aplicación de clustering
 
-#Se calculan las sumas de cuadrados dentro, para distintos valores de k (desde 2 hasta 20) y se grafica
-n.lev=20
-wss <- rnorm(10)
-while (prod(wss==sort(wss,decreasing=T))==0) {
-  wss <- (nrow(dat)-1)*sum(apply(scale(dat),2,var))
-  for (i in 2:n.lev) wss[i] <- sum(kmeans(scale(dat), centers=i)$withinss)}
-wss
-plot(1:20, wss)
+### Un alogritmo de clustering jerárquico
 
-```
-
-```{r}
+```{r, warning=FALSE}
 #cluster jerárquico
-hc = hclust(dist(cbind(x1,x2)), method = 'ward')
+hc = hclust(dist(dat), method = 'ward')
 par(mar=c(0,5,0,0), cex=0.08)
 y=cutree(hc, 7)
 library(sparcl)
-ColorDendrogram(hc, y = y, labels = names(y), branchlength = 80)#plot52
-par(opar)
+ColorDendrogram(hc, y = y, labels = names(y), branchlength = 4)#plot52
+
 ```
+
+### Clustering por kmeans con un k arbitrario (k=3)
+
 ```{r}
-# En muchos casos se recomienda armar loa grupos en base a los componentes principales mas importantes
-##componentes principales
+library(fpc)
+fit=kmeansruns(dat,krange=3,criterion="ch")
+
+```
+
+En muchos casos se recomienda armar los grupos en base a los componentes principales mas importantes. Del siguiente modo se puede aplicar componentes principales:
+
+```{r}
 library(FactoMineR)
 par(cex=0.05)
-result <- PCA(dat) # graphs generated automatically
+result <- PCA(dat)
 summary(result)
 plot(result) # gráficos varios entre ellos el biplot
 res=result$ind$coord[]
+#primeros dos componentes
 x1 = res[,1]
 x2 = res[,2]
-x3 = res[,3] 
+
 ```
 
+y luego correr kmeans, sobre los primeros componentes principales, por ejemplo los dos primeros:
+
 ```{r}
-fit1=kmeansruns(cbind(x1,x2),krange=1:10,criterion="ch", scaledata=TRUE)
-fit2=kmeansruns(cbind(x1,x2),krange=1:10,criterion="ch")
+fit=kmeansruns(cbind(x1,x2),krange=3,criterion="ch")
 ```
 
-es interesante notar que sin estandarizar los compoenntes principales 1 y 2, se obtienen 9 grupos, en cambio estandarizando se obtienen 1 solo cluster.
+
+# Inciso 2
+
+ -  Investigue los resultados en el meta parametro K numero de cumulos e investigue posibles procesos de seleccion del mismo.
+ 
+Se puede aplicar kmeans para diversos k usando el argumento krange de la función kmeansruns, por ejemplo para $k=1,...10$. Para seleccionar k, se podría acudir alguna función de la suma de cuadrados dentro de los clusters y entre clusters. En la misma función kmeansruns estan implementados algunos criterios de selección de k (average silhouette width y Calinski-Harabasz). Por ejemplo aquí se implementa la selección del k optimo entre $k=1,...10$, por el método Calinski-Harabasz:
 
 ```{r}
-#otra biblioteca, en la cual se puede graficar
+fit = kmeansruns(dat,krange=1:10,criterion="ch")
+```
+
+El algoritmo indica que el optimo es k=2.
+
+# Inciso 3
+
+- Comente la influencia de la normalización de los datos en los resultados del clustering.
+
+```{r}
+fit =kmeansruns(dat,krange=1:10,criterion="ch", scaledata=TRUE)
+
+```
+
+Al trabajar con los datos estandarizados se encuentran dos clusters. La estandarización no modificó demasiado el análisis. Esto puede deberse a que las transformaciónes previar realizadas sobre las variables generan cierto grado de estandarización.
+
+Finalmente, se grafican los clusters y se ven cuantos barrios hay en cada uno de ellos
+
+```{r}
 library(cluster)
-fit1 <- kmeans(cbind(x1,x2), 2, nstart=100)
+#fit1 <- kmeans(dat, 2, nstart=100, scale=TRUE)
 par(mar=c(5,5,1,1), cex=0.4)
-clusplot(cbind(x1,x2), fit1$cluster, color=TRUE, shade=TRUE, 
+clusplot(dat, fit$cluster, color=TRUE, shade=TRUE, 
          labels=2, lines=0, cex=0.8)
-par(opar)
-table(fit1$cluster)
+#par(opar)
+table(fit$cluster)
 
 ```
 
 
-
-Para analizar seleccionar clusters se puede usar la función kmeansruns, estandarizando y no estandarizando
-
-```{r}
-
-library(fpc)
-fit=kmeansruns(c(x1,x2),krange=1:10,criterion="ch", scaledata=FALSE)
-fit_scale=kmeansruns(c(x1,x2),krange=1:10,criterion="ch", scaledata=TRUE)
-```
-
-Es extraño notar que tanco con estandarización como sin ella, ene ste caso se elige 1 cluster
