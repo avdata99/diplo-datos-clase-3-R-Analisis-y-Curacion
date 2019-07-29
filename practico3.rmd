@@ -1,16 +1,143 @@
 ---
 title: "Práctico 3. Clase 4 de Análisis y Curación"
-output: html_notebook
+author:
+- name: Andrés Vázquez
+- name: Sergio Buzzi
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
 ---
 
-# Practico 3.
 
+# Inciso 1
  - Elija un dataset clasificado de su preferencia y area (domain expertise), aplique un metodo de clustering y/o mixtura de Gaussianas en el mismo.
- -  Investigue los resultados en el meta parametro K numero de cumulos e investigue posibles procesos de seleccion del mismo.
- - Elabore un resumen, y selecione un mejor valor segun el/los criterios aplicados, discuta el significado de los cumulos encontrados.
- - Comente la influencia de la normalizacion de los datos en los resultados del clustering.
+ 
+## Datos
+
+Se tiene información sobre 46 variables, para los 479 barrios de la Ciudad de Córdoba, originaria de la Encuesta Provincial de hogares de la Provincia de Córdoba 2008.
 
 ```{r}
-print("No hecho")
+#load("base.RData")
+# En base se tiene la información de 46 variables
+#save(base, file="datosbarrios.RData")
+#dim(base)
+load("datosbarrios.RData")
+
 ```
+
+```{r}
+attach(base)
+educ=base[,1:11]
+leer=base[,12:13]
+salud=base[,14:15]
+empleo=base[,16:18]
+nbi=base[,20:24]
+privacion=base[,25:28]
+vivienda=base[,29:33]
+habitantes=base[,34:41]
+std=base[,42:46]
+
+#Para que tenga sentido el análisis se toman algunos ratios por cuestiones conceptuales,
+# por ejemplo la cantidad de personas empleadas en un barrio esta influenciada por las personas en 
+# condición de trabajar (14 años o mas)
+educstd=educ/jefes
+leerstd=leer/pob3omas
+saludstd=salud/poblacion
+empleostd=empleo/pob14omas
+nbistd=nbi/poblacion
+privacionstd=privacion/poblacion
+viviendastd=vivienda/hogares
+habitantesstd=habitantes/hogares
+
+basestd=cbind(educstd,leerstd,saludstd,empleostd,nbistd,privacionstd,viviendastd,habitantesstd)
+sub=subset(cbind(basestd,poblacion),poblacion>=2000)
+semibase=sub[,-ncol(sub)]
+ 
+# se saca del listado sacar del listado: inicial, sabeleer, cobertura, ocupados, inactivos, sinprivacion, casa, uno, o sea se dejan esaca categorías como referencia
+datos=semibase[,-c(1,12,14,16,18,24,28,33)]
+dat=datos
+```
+
+## Aplicación de clustering
+
+### Un alogritmo de clustering jerárquico
+
+```{r, warning=FALSE}
+#cluster jerárquico
+hc = hclust(dist(dat), method = 'ward')
+par(mar=c(0,5,0,0), cex=0.08)
+y=cutree(hc, 7)
+library(sparcl)
+ColorDendrogram(hc, y = y, labels = names(y), branchlength = 4)#plot52
+
+```
+
+### Clustering por kmeans con un k arbitrario (k=3)
+
+```{r}
+library(fpc)
+fit=kmeansruns(dat,krange=3,criterion="ch")
+
+```
+
+En muchos casos se recomienda armar los grupos en base a los componentes principales mas importantes. Del siguiente modo se puede aplicar componentes principales:
+
+```{r}
+library(FactoMineR)
+par(cex=0.05)
+result <- PCA(dat)
+summary(result)
+plot(result) # gráficos varios entre ellos el biplot
+res=result$ind$coord[]
+#primeros dos componentes
+x1 = res[,1]
+x2 = res[,2]
+
+```
+
+y luego correr kmeans, sobre los primeros componentes principales, por ejemplo los dos primeros:
+
+```{r}
+fit=kmeansruns(cbind(x1,x2),krange=3,criterion="ch")
+```
+
+
+# Inciso 2
+
+ -  Investigue los resultados en el meta parametro K numero de cumulos e investigue posibles procesos de seleccion del mismo.
+ 
+Se puede aplicar kmeans para diversos k usando el argumento krange de la función kmeansruns, por ejemplo para $k=1,...10$. Para seleccionar k, se podría acudir alguna función de la suma de cuadrados dentro de los clusters y entre clusters. En la misma función kmeansruns estan implementados algunos criterios de selección de k (average silhouette width y Calinski-Harabasz). Por ejemplo aquí se implementa la selección del k optimo entre $k=1,...10$, por el método Calinski-Harabasz:
+
+```{r}
+fit = kmeansruns(dat,krange=1:10,criterion="ch")
+```
+
+El algoritmo indica que el optimo es k=2.
+
+# Inciso 3
+
+- Comente la influencia de la normalización de los datos en los resultados del clustering.
+
+```{r}
+fit =kmeansruns(dat,krange=1:10,criterion="ch", scaledata=TRUE)
+
+```
+
+Al trabajar con los datos estandarizados se encuentran dos clusters. La estandarización no modificó demasiado el análisis. Esto puede deberse a que las transformaciónes previar realizadas sobre las variables generan cierto grado de estandarización.
+
+Finalmente, se grafican los clusters y se ven cuantos barrios hay en cada uno de ellos
+
+```{r}
+library(cluster)
+#fit1 <- kmeans(dat, 2, nstart=100, scale=TRUE)
+par(mar=c(5,5,1,1), cex=0.4)
+clusplot(dat, fit$cluster, color=TRUE, shade=TRUE, 
+         labels=2, lines=0, cex=0.8)
+#par(opar)
+table(fit$cluster)
+
+```
+
 

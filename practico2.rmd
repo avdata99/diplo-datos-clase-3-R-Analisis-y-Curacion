@@ -1,7 +1,11 @@
 ---
 title: "Práctico 2. Clase 4 de Análisis y Curación"
 output: html_notebook
-author: Andrés Vázquez
+author:
+  - name: Andrés Vázquez
+  - name: Sergio Buzzi
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ## Ejercicio
@@ -38,6 +42,11 @@ data_n_z <- as.data.frame(lapply(data[2:31], zscore))
 # summary(data_n_z$V3)
 # summary(data_n_z$V8)
 
+# o bien usando la función scale
+#data_n_z_scale <- scale(x, center = TRUE, scale=TRUE)
+#mean(data_n_z_scale)
+#sd(data_n_z_scale)
+
 data_train_z <- data_n_z[1:469, ]
 data_test_z  <- data_n_z[470:569, ] 
 
@@ -49,6 +58,8 @@ data_test_pred_z <- knn(train=data_train_z, test=data_test_z, cl=data_train_labe
 
 library(gmodels)
 CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+
+
 ```
 
 + Pruebe algunos valores alternativos de k=1, 5,  11, 15, 21 y seleccione el mejor valor de k.
@@ -56,33 +67,56 @@ CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
 ```{r}
 data_test_pred_z <- knn(train=data_train_z, test=data_test_z, cl=data_train_labels, k=1)
 CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+temp <- CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+porcentaje_clasif_correctas_k_1= 100*(temp$t[1,1]+temp$t[2,2])/sum(temp$t)
+
 ```
 
 ```{r}
 data_test_pred_z <- knn(train=data_train_z, test=data_test_z, cl=data_train_labels, k=5)
 CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+temp <- CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+porcentaje_clasif_correctas_k_5= 100*(temp$t[1,1]+temp$t[2,2])/sum(temp$t)
+
 ```
 
 ```{r}
 data_test_pred_z <- knn(train=data_train_z, test=data_test_z, cl=data_train_labels, k=11)
 CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+temp <- CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+porcentaje_clasif_correctas_k_11= 100*(temp$t[1,1]+temp$t[2,2])/sum(temp$t)
+
 ```
 
 ```{r}
 data_test_pred_z <- knn(train=data_train_z, test=data_test_z, cl=data_train_labels, k=15)
 CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+temp <- CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+porcentaje_clasif_correctas_k_15= 100*(temp$t[1,1]+temp$t[2,2])/sum(temp$t)
+
 ```
 
 ```{r}
 data_test_pred_z <- knn(train=data_train_z, test=data_test_z, cl=data_train_labels, k=21)
 CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+temp <- CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+porcentaje_clasif_correctas_k_21= 100*(temp$t[1,1]+temp$t[2,2])/sum(temp$t)
 ```
 
-+ mientras termina su merecido cafe verifique si el resultado cambia utilizando paciente elegidos aleatoriamente para el conjunto de validacion.
+Se pueden costruir varios ratios, el que primero se sabe ver es el porcentaje de clasificaciones correctas: (BB+MM)/TOTAL.
 
 ```{r}
-print("#TODO Ver cual es la forma de medir cual es el mejor")
+#print("#TODO Ver cual es la forma de medir cual es el mejor")
+library(knitr)
+kable(data.frame(c(1,5,11,15,21),
+c(porcentaje_clasif_correctas_k_1,porcentaje_clasif_correctas_k_5,porcentaje_clasif_correctas_k_11,porcentaje_clasif_correctas_k_15,porcentaje_clasif_correctas_k_21)), col.names = c("k", "Porc. Clasif. Correcta"))
+
 ```
+
+De acuerdo a ese criterio funcionan mejor lo valores mas grandes de k (11, 15 y 21).
+
+
++ mientras termina su merecido cafe verifique si el resultado cambia utilizando paciente elegidos aleatoriamente para el conjunto de validacion.
 
 
 ## Probar si los resultados cambian tomando diferentes datos de test y entrenamiento
@@ -98,7 +132,9 @@ data_test_labels  <- data[1:100, 1]
 
 data_test_pred_z <- knn(train=data_train_z, test=data_test_z, cl=data_train_labels, k=11)
 CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
-
+temp <- CrossTable(x=data_test_labels, y=data_test_pred_z, prop.chisq = FALSE)
+porcentaje_clasif_correctas_k11_otra_muestra= 100*(temp$t[1,1]+temp$t[2,2])/sum(temp$t)
+porcentaje_clasif_correctas_k11_otra_muestra
 ```
 
-Los resultados son parecidos ¿Cómo evalúo las diferencias
+Los resultados son parecidos, en este caso particular, usando k=11, se califica correctamente el 91% de los casos, mientras que con la muestra anterior (con el mismo k=11), se clasificaba correctamente el 98% de los casos, o sea que el desempeño empeora. 
